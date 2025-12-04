@@ -9,7 +9,6 @@
 
 (defun get-adj-positions (point)
 	"Point is complex number. Return list of adjacent positions"
-	(format t "point ~a~%" point)
 	(let (
 		(N  (+ point #C( 0  1)))
 		(NW (+ point #C(-1  1)))
@@ -34,6 +33,31 @@
 		)))
 	(if (< neibours-count 4) t nil)
 	)
+	)
+
+(defun count-hasmap-valid-keys (kv)
+	(let ((counter 0))
+		(loop
+			for point being the hash-keys of kv
+			do (if (gethash point kv) (setf counter (+ counter 1)))
+			)
+		counter
+		)
+	)
+
+(defun rec-remove-paper (point-map)
+	(let ((before-removal (count-hasmap-valid-keys point-map)))
+		(loop
+			for point being the hash-keys of *point-map*
+			do (if (is-paper-accessable point) (remhash point point-map))
+			)
+
+		(if (= (count-hasmap-valid-keys point-map) before-removal)
+			point-map
+			(rec-remove-paper point-map)
+			)
+		)
+
 	)
 
 (defun main ()
@@ -63,7 +87,17 @@
 			)
 		(format t "    Part 1: ~a~%" paper-counter)
 		)
-	
+
+	; PART 2
+	(let* (
+		(start-paper-counter (count-hasmap-valid-keys *point-map*))
+		(point-map-at-end (rec-remove-paper *point-map*)))
+
+		(format t "    Part 2: ~a~%"
+			(- start-paper-counter (count-hasmap-valid-keys point-map-at-end))
+			)
+		)
+
 	)
 
 

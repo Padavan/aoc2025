@@ -22,6 +22,11 @@
         )
     )
 
+(defun count-joultage (schematics target-joultage)
+    "count clicks to enable joultage parts"
+    
+  )
+
 (defun count-min-click (light rank schematics)
     "count minimal clicks"
     ; (format t "light ~a~%" light)
@@ -29,6 +34,7 @@
     ; (format t "schematics ~a~%" schematics)
     (let ((initial (cons 0 0)) ; const number which represent state of lights, and count
         (numbers (mapcar #'get-number-from-schematics schematics))
+        (cache (list 0))
         ; (target-rem (loop for i from 0 to rank sum (expt 2 i)))
         )
       
@@ -39,33 +45,34 @@
         (let ((count (loop
             with queue = (list initial)
             as dequeued-item = (first queue)
-            ; repeat 100
+            ; repeat 4
             ; with dequeued-item = (remove-if (constantly t) queue :count 1)
-            ; do (format t "dequeued-item: ~a~%" dequeued-item)
             ; do (format t "queue ~a~%" queue)
+            ; do (format t "dequeued-item: ~a~%" dequeued-item)
+            ; do (format t "cache ~a~%" cache) 
             ; do (format t "rem ~a~%" (rem (car dequeued-item) (expt 2 rank)))
             if (= light (car dequeued-item))
                 return (cdr dequeued-item)
             ; do (format t "length ~a~%" (length queue))
             do (loop
                  for item in numbers
+                 as old-number = (car dequeued-item)
+                 as old-count = (cdr dequeued-item)
+                 as new-number = (logxor old-number item)
                  ; do (format t "item ~a~%" item)
-                 with old-number = (car dequeued-item)
-                 with old-count = (cdr dequeued-item)
-                 do (setf queue (append queue (list (cons (logxor old-number item) (1+ old-count)))))
+                 if (not (member new-number cache))
+                     do (setf queue (append queue (list (cons new-number (1+ old-count)))))
+                     and do (push new-number cache)
             )
             do (setf queue (remove-if (constantly t) queue :count 1))
             ; do (delete dequeued-item queue)
             
             
             )))
-          (format t "count: ~a~%" count)
-           count)
+            ; (format t "count: ~a~%" count)
+        count)
       
-    )
-
-      
-    
+        )
     )
 
 (defun parse-line (line)
@@ -131,6 +138,8 @@
     )
 
 (main)
+
+; 415 too low
 
 ; (format t "~a~%"  (rem #b10101 #b10101))
 

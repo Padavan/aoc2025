@@ -77,8 +77,6 @@
                 )
             ) (setf result t))
         
-        ; ()
-        ; (format t "   ~a~%" result)
         result
         )
   )

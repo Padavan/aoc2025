@@ -13,6 +13,74 @@
         collect (subseq string i j)
         while j))
 
+(defun update-arr (arr schema)
+    "add 1 to arr according to schema"
+    ; (format t "update-arr arr ~a~%" arr)
+    ; (format t "update-arr schema ~a~%" schema)
+    ; (let ((new-arr arr))
+    ;     (loop
+    ;         for num in schema
+    ;         as cur = (nth num new-arr)
+    ;         do (setf (nth num new-arr) (1+ cur))
+    ;         )
+    ;     new-arr
+    ;     )
+    (loop
+        for i from 0 to (1- (length arr))
+        as j = (if (member i schema) 1 0)
+        collect (+ (nth i arr) j)
+        )
+    )
+
+(defun is-array-valid (arr target-joultage)
+    (every #'<= arr target-joultage)
+    )
+
+(defun count-joultage (schematics target-joultage)
+    "count clicks to enable joultage parts"
+    ; (format t "schematics ~a~%" schematics)
+    ; (format t "target-joultage: ~a~%" target-joultage)
+
+    (let* (
+        (size (length target-joultage))
+        (initial-state (cons (make-list size :initial-element 0) 0))
+        (cache (list (car initial-state)))
+        )
+
+        ; (format t "initial-state ~a~%" initial-state)
+        ; (format t "size ~a~%" size)
+
+        (let ((count (loop
+            with queue = (list initial-state)
+            as dequeued-item = (first queue)
+            repeat 5
+            ; do (format t "dequeued-item: ~a~%" dequeued-item)
+            ; do (format t "queue ~a~%" queue)
+            do (format t "cache ~a~%" cache)
+            if (equal target-joultage (car dequeued-item))
+                return (cdr dequeued-item)
+            ; return 0
+            do (loop
+                for schema in schematics
+                as old-arr = (car dequeued-item)
+                as old-count = (cdr dequeued-item)
+                as new-arr = (update-arr old-arr schema)
+                ; (is-array-valid new-arr target-joultage)
+                ; do (format t "--new-arr ~a~%" new-arr)
+                ; do (format t "--target-joultage ~a~%" target-joultage)
+                ; do (format t "--~a~%" (if (member new-arr cache :test #'equal) "cached" "notcached"))
+                ; do (format t "--condition2: ~a~%" (if (is-array-valid new-arr target-joultage) "true" "false"))
+                if (and (not (member new-arr cache :test #'equal)) (is-array-valid new-arr target-joultage))
+                    do (setf queue (append queue (list (cons new-arr (1+ old-count)))))
+                    and do (push new-arr cache)
+                )
+            do (setf queue (remove-if (constantly t) queue :count 1))
+            )))
+        (format t "count: ~a~%" count)
+        (if (null count) 0 count)
+
+        ))
+  )
 
 (defun get-number-from-schematics (schematic)
     (reduce
@@ -21,11 +89,6 @@
         :initial-value 0    
         )
     )
-
-(defun count-joultage (schematics target-joultage)
-    "count clicks to enable joultage parts"
-    
-  )
 
 (defun count-min-click (light rank schematics)
     "count minimal clicks"
@@ -98,7 +161,7 @@
                 and do (setf rank light-end)
             )
         
-        (setf joultage (split-by-comma (subseq line (1+ joultage-start) (1- line-lenght))))
+        (setf joultage (mapcar #'parse-integer (split-by-comma (subseq line (1+ joultage-start) (1- line-lenght)))))
         
         (let*
           ((schematics-str (subseq line (1+ light-end) joultage-start)))
@@ -125,13 +188,16 @@
 (defun main ()
     (format t "~a~%" "--- Day 10:  ---")
     (let ((input (get-file "day10.txt")))
-          ; (format t "~a~%" input)
-          ; (format t "~a~%" 
-          ; 
-          (format t "    Part 1: ~a~%" (reduce
+        ; (format t "    Part 1: ~a~%" (reduce
+            ; #'(lambda (acc line) (multiple-value-bind (light rank schematics joultage) (parse-line line)
+            ;   (+ acc (count-min-click light rank schematics))))
+            ; input
+            ; :initial-value 0))
+
+        (format t "    Part 2: ~a~%" (reduce
             #'(lambda (acc line) (multiple-value-bind (light rank schematics joultage) (parse-line line)
-                                                  (+ acc (count-min-click light rank schematics))))
-            input
+                (+ acc (count-joultage schematics joultage))))
+            (list (first input))
             :initial-value 0))
           
         )
@@ -145,14 +211,18 @@
 
 
 ; (format t "~a~%"  #b0110)
-(format t "~a~%"  15)
-(format t "light ~19,,' ,4B~%" 15)
-(format t "~a~%"  6)
-(format t "light ~19,,' ,4B~%" 6)
-(format t "light ~19,,' ,4B~%" 5)
-(format t "light ~19,,' ,4B~%" 1)
-(format t "light ~19,,' ,4B~%" (logxor 0 5))
-(format t "~a~%" (logxor 3 (logxor 0 5)))
-
+; (format t "~a~%"  15)
+; (format t "light ~19,,' ,4B~%" 15)
+; (format t "~a~%"  6)
+; (format t "light ~19,,' ,4B~%" 6)
+; (format t "light ~19,,' ,4B~%" 5)
+; (format t "light ~19,,' ,4B~%" 1)
+; (format t "light ~19,,' ,4B~%" (logxor 0 5))
+; (format t "~a~%" (logxor 3 (logxor 0 5)))
+; (format t "~a~%" (if (equal '(0 1 2) '(0 2 2)) "true" "false"))
+; (format t "~a~%" (update-arr '(0 0 0 0 0) '(2 3)))
+; (format t "~a~%" (if (is-array-valid '(1 2 3 4 6) '(6 6 6 6 6)) "true" "false"))
+; (format t "~a~%" (member '(0 0 0) (list '(0 0 0)) :test #'equal))
+; (format t "~a~%" (member '(0 0 1) (list '(0 0 0)) :test #'equal))
 ; (format t "~a~%"  #b110)
 ; (format t "~a~%"  #b1110)

@@ -14,37 +14,59 @@
         while j))
 
 
-(defparameter *device-map* (make-hash-table))
-; (defparameter *visited-map* (make-hash-table))
+(defparameter *device-map* (make-hash-table :test 'equal))
+(defparameter *visited-map* (make-hash-table :test 'equal))
 
-
-(defun traverse (device)
+(defun traverse (device end)
     "return visited"
-    ; (format t "~a~%" device)
-    (format t "traverse ~a~%" device)
-
     (let ((device-outputs (gethash device *device-map*))
           (result 0)
           )
-        (format t "device-outputs ~a~%" device-outputs)
-        (format t "~a~%" (if (equal device "out") "true" "false"))
-        (if (equal device 'out)
-            (setf result)
+        (if (equal device end)
+            (setf result 1)
             (setf result (reduce
-                #'(lambda (acc next) (+ acc (traverse (next))))
+                #'(lambda (acc next) (+ acc (traverse next end)))
                 device-outputs
                 :initial-value 0
                 )
             ))
-      
-        (format t "result ~a~%" result)
         result
       )
-  )
+    )
 
-(defun part-1 ()
-  (traverse "you")
-)
+(defun traverse-fixed (device end path)
+    "return visited"
+
+    (let ((device-outputs (gethash device *device-map*))
+      (result 0)
+      (updated-path (copy-list path))
+      )
+    
+    (if (gethash device *visited-map*)
+        (setf result (gethash device *visited-map*))
+        (if (equal device end)
+            (setf result 1)
+            (progn
+                (push device updated-path)
+                (setf result (reduce
+                    #'(lambda (acc next) (+ acc (traverse-fixed next end updated-path)))
+                    device-outputs
+                    :initial-value 0
+                    ))
+                )
+            )
+        )
+    
+    (setf (gethash device *visited-map*) result)
+    result
+    )
+    )
+
+(defun clean-vis ()
+    (loop
+            for item being the hash-keys of *visited-map*
+            do (remhash item *visited-map*)
+            ))
 
 (defun main ()
     (format t "~a~%" "--- Day 11: Reactor ---")
@@ -53,17 +75,22 @@
             for line in input
             as device = (subseq line 0 3)
             as outputs = (split-by-space (subseq line 5))
-            do (format t "~a~%" (type-of device))
-            do (format t "~a~%" outputs)
             do (setf (gethash device *device-map*) outputs)
-            (format t "~a~%" "---puk")
             )
         )
-        ; (format t "~a~%" (gethash 'you *device-map*))
-        (format t "    Part 1:~a~%" (part-1))
+
+    (format t "    Part 1:~a~%" (traverse "you" "out"))
+
+    (let ((svr-to-fft (traverse-fixed "svr" "fft" (list nil))))
+    (clean-vis)
+        (let ((fft-to-dac (traverse-fixed "fft" "dac" (list nil))))
+            (clean-vis)
+            (let ((dac-to-out (traverse-fixed "dac" "out" (list nil))))
+                (clean-vis)
+                (format t "    Part 2:~a~%" (* svr-to-fft fft-to-dac dac-to-out))
+                )
+            )
+        )
     )
 
 (main)
-(format t "~a~%" (loop for key being the hash-keys of *device-map* collect (type-of key)))
-(format t "outputs ~a~%" (gethash "you" *device-map*))
-; (SIMPLE-ARRAY CHARACTER (3))

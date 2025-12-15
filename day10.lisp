@@ -171,27 +171,40 @@
     )
   )
 
-(defun count-joultage (schematics target-joultage)
+(defun count-joultage (schematics target)
     "count clicks to enable joultage parts"
     (format t "schematics ~a~%" schematics)
     (format t "target-joultage: ~a~%" target-joultage)
 
-    (let (
+    (let* (
           (joultage-size (length target-joultage))
-          (multipliers (make-list (length schematics) :initial-element nil)))
-          (multiple-value-bind (max-multipliers deps-list) (get-max-multipliers schematics target-joultage)
+          (multipliers (make-list (length schematics) :initial-element nil))
+          (matrix (loop
+                for schema in schematics
+                collect (loop 
+                    for i from 0 to (- joultage-size 1)
+                    if (member i schema)
+                        collect 1
+                    else
+                        collect 0
+                    ))))
+
+          ; (multiple-value-bind (max-multipliers deps-list) (get-max-multipliers schematics target-joultage)
+            ; )
+      
+        (format t "target ~a~%" target)
+        (format t "matrix ~a~%" matrix)
       
       ; (format t "dep-list ~a~%" deps-list)
       ; (format t "max-multipliers ~a~%" max-multipliers)
-            (let ((count (traverse 0 multipliers deps-list schematics target-joultage (make-list joultage-size :initial-element 0))))
+            ; (let ((count (traverse 0 multipliers deps-list schematics target-joultage (make-list joultage-size :initial-element 0))))
               
-              (format t "FINAL: ~a~%" count)
-              count
-            )
+              ; (format t "FINAL: ~a~%" count)
+              ; count
+            0
         )
     )
     
-  )
 
 (defun get-number-from-schematics (schematic)
     (reduce

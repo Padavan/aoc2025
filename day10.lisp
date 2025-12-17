@@ -16,192 +16,319 @@
 (defun compare-length (a b)
     (> (length b) (length a)))
 
-(defun update-arr (arr schema times)
-    "add 1 to arr according to schema"
-    (loop
-        for i from 0 to (1- (length arr))
-        as j = (if (member i schema) times 0)
-        collect (+ (nth i arr) j)
+
+(defun gauss-this-shit (matrix-old result-old)
+    ; (format t "---gauss this matrix--- ~a~%" "")
+    ; (format t "result-old ~a~%" result-old)
+    ; (print-matrix matrix-old)
+    (let* (
+        (matrix (copy-list matrix-old))
+        (result (copy-list result-old))
+        (height (length matrix))
+        (widht (length (first matrix)))
+        (independant (list))
+        (dependant (list))
         )
-    )
 
-; (defun is-array-valid (arr target-joultage)
-;     (every #'<= arr target-joultage)
-;     )
-
-(defun check-equation (multipliers equations target-joultage)
-    (let ((final t))
-        (loop for equation in equations
-                for j from 0
-                as right-result = (nth j target-joultage)
-                as left-result = (reduce #'+ (mapcar #'(lambda (cur) (nth cur multipliers)) equation))
-                as result-equal = (= left-result right-result)
-                do (setf final (and final result-equal))
-                )
-        final
-      )
-    )
-
-(defun traverse (index multipliers equations schematics target-joultage joultage)
-          ; (format t "=====index: ~a~%" index)
-         ; (format t "multipliers ~a~%" multipliers)
-    (let* ((size (length schematics))
-          ; (schema-limits (nth index equations))
-          (current-schema (nth index schematics))
-          (diff (mapcar #'- target-joultage joultage))
-          (limits (list))
-          )
-          ; (upper-limit (loop for l in current-schema minimize (nth l diff)))
-            
-            
-            (loop for equation in equations
-                for j from 0
-                as result = (nth j target-joultage)
-                as contain-index = (member index equation)
-                as contain-nil = (some #'null (mapcar #'(lambda (cur) (nth cur multipliers)) equation))
-                if (and contain-index contain-nil)
-                    do (setf limits (loop for m from 0 to result collect m))
-                    ; and do (format t "ifnil ~a~%" (loop for m from 0 to result collect m))
-                else if contain-index
-                    do (setf limits (list (- result (reduce #'+ (mapcar #'(lambda (cur) (nth cur multipliers)) equation)))))
+        (loop
+            for k from 0 to (1- widht)
+            with row = 0
+            as k-row = (loop
+                for j from row to (1- height)
+                as value = (nth k (nth j matrix))
+                if (not (= 0 value))
+                    return j
                 )
 
-            ; (format t "limits ~a~%" limits)
-            
-            (if (= index size)
-                (if (check-equation multipliers equations target-joultage)
-                    (progn
-                      ; (format t "~a~%" "FINAL")
-                      ; (format t "multipliers ~a~%" multipliers)
-                      0)
-                    (progn
-                      ; (format t "joultage: ~a~%" joultage)
-                      ; (format t "target  : ~a~%" target-joultage)
-                      ; (format t "lastindex reached ~a~%" multipliers)
-                      nil)
-                    )
-                
-                      (loop
-                        for press in limits
-                        ; as next-joutage = (update-arr joultage current-schema press)
-                        as next-multipliers = (loop for m in multipliers for i from 0 if (= index i) collect press else collect m)
-                        as count = (traverse (1+ index) next-multipliers equations schematics target-joultage joultage)
-                        ; as count = nil
-                        ; do (format t "press: ~a~%" press)
-                        if (not (null count))
-                            return (+ press count)
+            ; do (format t "k: ~a~%" k)
+            ; do (format t "k-row: ~a~%" k-row)
+            ; do (print-matrix matrix)
+            ; do (format t "k-row ~a~%" k-row)
+            ; as diaonal-element = (nth k (nth k matrix))
+            ; do (format t "diagonal-element ~a~%" diagonal-element)
+            ; do (format t "K ~a~%" k)
+            ; find with non zero k element below row and swap
+            ; do (loop)
+            ; if (= 0 diagonal-element)
+            ;     do (format t "swap ~a~%" k)
+            ;     do (loop for j from (1+ k) to (- (length matrix) 1)
+            ;         ; do (format t "j: ~a~%" j)
+            ;         ; do (format t "puk: ~a~%" (nth k (nth j matrix)))
+            ;         if (not (= (nth k (nth j matrix)) 0))
+            ;             do (rotatef (nth k matrix) (nth j matrix))
+            ;             and do (rotatef (nth k result) (nth j result))
+            ;             and return nil
+            ;     )
+            if (null k-row)
+                do (push k independant)
+                ; and do (setf k (1+ k))
+                ; and do (format t "~a~%" "--- SKIP k-row null")
+            else
+                ; do (format t "~a~%" "ELSE")
+                ; Swap
+                do (rotatef (nth row matrix) (nth k-row matrix))
+                ; and do (format t "swap ~a~%" "")
+                and do (rotatef (nth row result) (nth k-row result))
+
+                ; Division
+                and do (let ((divider (nth k (nth row matrix))))
+                    ; (format t "divider ~a~%" divider)
+                    (if (not (= 0 divider))
+                        (progn
+                            ; (format t "DIVISION ~a~%" divider)
+                            (setf (nth row matrix) (mapcar #'(lambda (cur) (/ cur divider)) (nth row matrix)))
+                            (setf (nth row result) (/ (nth row result) divider))
+                            )
                         )
                     )
-                
-                    
-                    
-                    ; for d in (nth j equations)
-                    ; if (member index d)
-          ; )
-          ; (format t "upper-limit ~a~%" upper-limit)
-          ; (format t "joultage: ~a~%" joultage)
-        ; (if (= index 3)
-        ;    (progn
-        ;      (format t "upper-limit: ~a~%" upper-limit
-        ;           )
-        ;     ))
-          ; (format t "multipliers ~a~%" multipliers)
-             ; (format t "deps-list ~a~%" deps-list)
-          ; (format t "max-multipliers ~a~%" max-multipliers) 
-          ; (format t "diff: ~a~%" diff)
-          ; (format t "upper-limit: ~a~%" upper-limit)
-          ; (format t "size: ~a~%" size)
-        ; (if (= index size)
-        ;     (if (equal target-joultage joultage)
-        ;         (progn
-        ;           ; (format t "~a~%" "FINAL")
-        ;           ; (format t "multipliers ~a~%" multipliers)
-        ;           0)
-        ;         (progn
-        ;           ; (format t "joultage: ~a~%" joultage)
-        ;           ; (format t "target  : ~a~%" target-joultage)
-        ;           ; (format t "lastindex reached ~a~%" multipliers)
-        ;           nil)
-        ;         )
-        ;     (loop
-        ;         for press from 0 to upper-limit
-        ;         as next-joutage = (update-arr joultage current-schema press)
-        ;         as next-multipliers = (loop for m in multipliers for i from 0 if (= index i) collect press else collect m)
-        ;         as count = (traverse (1+ index) next-multipliers max-multipliers deps-list schematics target-joultage next-joutage)
-        ;         ; as count = nil
-        ;         ; do (format t "press: ~a~%" press)
-        ;         if (not (null count))
-        ;             return (+ press count)
-        ;         )
-        ;     )
-        
-            
+
+                ; and do (format t "~a~%" "before substraction")
+                ; and do (format t "~a~%" result)
+                ; and do (print-matrix matrix)
+                ; Subtraction
+                and do (loop
+                    for j from 0 to (1- height)
+                    as col-under = (nth k (nth j matrix))
+                    ; do (format t "diff ~a~%" diff) 
+                    ; do (format t "row-to-substract-from ~a~%" row-to-substract-from)
+                    if (not (= j row))
+                        do (setf (nth j matrix) (mapcar #'- (nth j matrix) (mapcar #'(lambda (cur) (* col-under cur)) (nth row matrix))))
+                        and do (setf (nth j result) (- (nth j result) (* col-under (nth row result))))
+                    )
+
+                ; and do (format t "~a~%" "puk")
+                and do (push k dependant)
+                and do (setf row (1+ row))
+
+            ; do (print-matrix matrix)
+
+            )
+
+
+            ; (format t "dependant ~a~%" dependant)
+            ; (format t "independant ~a~%" independant)
+            (values matrix result dependant independant)
         )
     )
 
-(defun get-max-multipliers (schematics target-joultage)
-    (let (
-        (max-multipliers (make-list (length schematics) :initial-element 1000))
-        (dep-list (make-list (length target-joultage)))
-        )
-            (loop
-                for joultage in target-joultage
-                for i from 0
-                do (loop
-                    for schema in schematics
-                    for schema-index from 0
-                    as current-max = (nth schema-index max-multipliers)
-                    as is-schema-included = (member i schema)
-                    if is-schema-included
-                        do (setf (nth schema-index max-multipliers) (min current-max joultage)) 
-                        and do (setf (nth i dep-list) (adjoin schema-index (nth i dep-list) ))
-                        ; and do (loop
-                        ;     for s in schematics
-                        ;     for j from 0
-                        ;     if (member i s)
-                        ;         do (setf (nth i (nth schema-index dep-list)) (adjoin j (nth i (nth schema-index dep-list)) ))
-                        ;         ; and do (setf (nth schema-index dep-list) (push schema-index (nth schema-index dep-list)) )
-                        ;         ; do (setf (nth i (nth schema-index dep-list)) (adjoin j (nth i (nth schema-index dep-list)) ))
-                        ; )
-                    )
-            
-                )
-        
-        (values max-multipliers dep-list)
+(defun cars (matrix)
+  "Return a list with all the cars of the lists in matrix"
+  (if (null matrix)
+      nil
+      (cons (car (car matrix)) (cars (cdr matrix)))))
+
+(defun cdrs (matrix)
+  "Return a list with all the cdrs of the lists in matrix"
+  (if (null matrix)
+      nil
+      (cons (cdr (car matrix)) (cdrs (cdr matrix)))))
+
+(defun transpose (matrix)
+  "Transpose matrix"
+  (cond ((null matrix) nil)
+        ((null (car matrix)) nil)
+        (t (cons (cars matrix) (transpose (cdrs matrix))))))
+
+(defun print-matrix (matrix)
+    (format t "~a~%" "---")
+    (loop for row in matrix
+        do (format t "~a~%" row))
+    (format t "~a~%" "---")
     )
-  )
+
+(defun get-matrix-from-schematics (schematics size)
+    (loop
+        for schema in schematics
+        collect (loop 
+            for i from 0 to (- size 1)
+            if (member i schema)
+                collect 1
+            else
+                collect 0
+            )
+        )
+    )
+
+(defun get-no-basis-vars (matrix)
+    (let* ((height (length matrix))
+        (widht (length (first matrix)))
+        (freevars (loop
+            for col from 0 to (1- widht)
+            if (not (equal 1 (nth col (nth col matrix))))
+                collect col
+            )
+        )
+        (basisvars (loop
+            for col from 0 to (1- widht)
+            if (equal 1 (nth col (nth col matrix)))
+                collect col
+            )
+        ))
+
+        (values freevars basisvars)
+        )
+    )
+
+(defun max-item (list)
+  (loop for item in list
+        maximizing item))
+
+(defun valid-press (press)
+    (and (>= press 0) (integerp press)))
+
+(defun solve-matrix (matrix matrix-result-old independant values dependant)
+    (let* ((height (length matrix))
+        (widht (length (first matrix)))
+        (answers (make-list widht))
+        (matrix-result (copy-list matrix-result-old)))
+
+
+
+
+        ; (print-matrix matrix)
+        ; (format t "matrix-result ~a~%" matrix-result)
+        ; (format t "answers before ~a~%"  answers)
+        ; (format t "independant ~a~%" independant)
+        ; (format t "values ~a~%" values)
+        ; (format t "dependant ~a~%" dependant)
+        ; (if (>= 0 (length independant))
+            (loop
+                for col in independant
+                for k in values
+                do (setf (nth col answers) k)
+                do (loop
+                    for row from 0 to (1- height)
+                    as value = (nth col (nth row matrix))
+                    as row-result = (nth row matrix-result)
+                    ; do (format t "col value ~a~%" value)
+                    ; do (format t "col k ~a~%" k)
+                    ; do (format t "row result value ~a~%" row-result)
+                    if (not (= value 0))
+                        do (setf (nth row matrix-result) (- row-result (* value k)))
+                        ; and do (format t "---DIFF ~a~%" (- row-result (* value k)))
+                        ; and do (setf (nth col (nth row matrix)) 0)
+                        ; and do (format t "~a~%" 2)
+                    )
+                )
+            ; )
+
+        ; (print-matrix matrix)
+        ; (format t "matrix-result ~a~%" matrix-result)
+        ; (format t "dependant ~a~%" dependant)
+
+        (loop
+            for var in dependant
+            ; as var-value = (nth var matrix-result)
+            ; do (format t "var ~a~%" var)
+            do (loop
+                for row from 0 to (1- height)
+                as value = (nth var (nth row matrix))
+                as row-result = (nth row matrix-result)
+                ; do (format t "row ~a~%" row)
+                ; do (format t "var ~a~%" var)
+                if (not (= 0 value)) 
+                    ; do (setf (nth row matrix-result) (- row-result var-value))
+                    do (setf (nth var answers) row-result)
+                ; do (setf (nth var (nth row matrix)) 0)
+                )
+
+            )
+
+        ; (format t "matrix-result after: ~a~%" matrix-result)
+        ; (format t "~a~%" "==")
+        ; (format t "~a~%" "==")
+        ; (print-matrix matrix)
+        ; (format t "matrix-result ~a~%" matrix-result)
+        ; (format t "answers ~a~%" answers)
+
+        (let ((equation-validation (loop
+            for row from 0 to (1- height)
+            ; do (format t "~a~%" "---")
+            collect (=
+                (nth row matrix-result-old)
+                (loop
+                    for col from 0 to (1- widht)
+                    as col-value = (nth col (nth row matrix))
+                    as var-value = (nth col answers)
+                    ; do (format t "col-value ~a~%" col-value)
+                    ; do (format t "var-value ~a~%" var-value)
+                    sum (* col-value var-value)
+                    )
+                )
+            )))
+
+            ; (format t "~a~%" equation-validation)
+
+
+            ; (format t "answers valid?: ~a~%" (if (every #'valid-press answers) "valid" "invalid"))
+            (if (and (every #'valid-press answers) (every #'(lambda (v) (not (null v))) equation-validation))
+                (progn
+                    ; (format t "answers ~a~%" answers)
+                    ; (format t "answers ~a~%" (apply #'+ answers))
+
+                    (apply #'+ answers)
+                    )
+                nil
+                )
+            )
+        ) 
+    )
+
+
+(defun dfs (index max freevars matrix matrix-result values basisvars)
+    (let ((size-freevars (length freevars))
+        (answer-count 99999))
+
+        (if (= index size-freevars)
+            (let ((count (solve-matrix matrix matrix-result freevars values basisvars)))
+                (if (not (null count))
+                    (setf answer-count count)
+                    )
+                )
+            (loop
+                for i from 0 to max
+                ; for i from 0 to 1
+                as next-values = (append values (list i))
+                do (let ((count (dfs (1+ index) max freevars matrix matrix-result next-values basisvars)))
+                        ; (format t "recieved count ~a~%" count)
+                        (setf answer-count (min count answer-count))
+                        )
+                )
+            )
+
+
+            answer-count
+        )
+    )
 
 (defun count-joultage (schematics target)
     "count clicks to enable joultage parts"
-    (format t "schematics ~a~%" schematics)
-    (format t "target-joultage: ~a~%" target-joultage)
+    ; (format t "schematics ~a~%" schematics)
+    ; (format t "target-joultage: ~a~%" target)
 
     (let* (
-          (joultage-size (length target-joultage))
-          (multipliers (make-list (length schematics) :initial-element nil))
-          (matrix (loop
-                for schema in schematics
-                collect (loop 
-                    for i from 0 to (- joultage-size 1)
-                    if (member i schema)
-                        collect 1
-                    else
-                        collect 0
-                    ))))
+          (joultage-size (length target))
+          ; (multipliers (make-list (length schematics) :initial-element nil))
+          (matrix (get-matrix-from-schematics schematics joultage-size))
+          (max-press (max-item target))
+
+          )
 
           ; (multiple-value-bind (max-multipliers deps-list) (get-max-multipliers schematics target-joultage)
             ; )
       
-        (format t "target ~a~%" target)
-        (format t "matrix ~a~%" matrix)
-      
-      ; (format t "dep-list ~a~%" deps-list)
-      ; (format t "max-multipliers ~a~%" max-multipliers)
-            ; (let ((count (traverse 0 multipliers deps-list schematics target-joultage (make-list joultage-size :initial-element 0))))
-              
-              ; (format t "FINAL: ~a~%" count)
-              ; count
-            0
+        ; (format t "target ~a~%" target)
+        ; (format t "first matrix ~a~%" "")
+        ; (print-matrix matrix)
+        ; (format t "rotated matrix ~a~%" (transpose matrix))
+        (multiple-value-bind (gauss-matrix matrix-result dependant independant) (gauss-this-shit (transpose matrix) target)
+            ; (format t "gauss-matrix ~a~%" gauss-matrix)
+            ; (format t "~a~%" "gauss matrix:")
+            ; (print-matrix gauss-matrix)
+            ; (format t "matrix-result ~a~%" matrix-result)
+
+            ; (multiple-value-bind (freevars basisvars) (get-no-basis-vars gauss-matrix)
+            (dfs 0 max-press independant gauss-matrix matrix-result (list) dependant))
         )
     )
     
@@ -277,19 +404,20 @@
             collect (mapcar #'parse-integer (split-by-comma (subseq schematics-str (1+ i) j)))
             ))
         )
-                              
-        (values light rank (sort schematics 'compare-length) joultage)
+                           
+                           ; (sort schematics 'compare-length)   
+        (values light rank schematics joultage)
        )
     )
 
 (defun main ()
     (format t "~a~%" "--- Day 10: Factory ---")
     (let ((input (get-file "day10.txt")))
-        ; (format t "    Part 1: ~a~%" (reduce
-            ; #'(lambda (acc line) (multiple-value-bind (light rank schematics joultage) (parse-line line)
-            ;   (+ acc (count-min-click light rank schematics))))
-            ; input
-            ; :initial-value 0))
+        (format t "    Part 1: ~a~%" (reduce
+            #'(lambda (acc line) (multiple-value-bind (light rank schematics joultage) (parse-line line)
+              (+ acc (count-min-click light rank schematics))))
+            input
+            :initial-value 0))
 
         (format t "    Part 2: ~a~%" (reduce
             #'(lambda (acc line) (multiple-value-bind (light rank schematics joultage) (parse-line line)
@@ -325,3 +453,46 @@
 ; (format t "~a~%"  #b110)
 ; (format t "~a~%"  #b1110)
 ; (format t "update-arr ~a~%" (update-arr '(1 2 3 4 5) '(1 3) 3))
+; (format t "get-no-basis-vars ~a~%" (get-no-basis-vars (list '(1 0 0 1 -1 -2) '(0 1 0 1 0 -1) '(0 0 1 0 0 1) '(0 0 0 0 1 1))))
+
+; (format t "~a~%" (solve-matrix (list '(1 0 0 1 0 -1) '(0 1 0 0 0 1) '(0 0 1 1 1 0) '(0 0 0 0 1 1)) (list 2 5 4 3) (list 5 3) (list 1 2) (list 4 2 1 0)))
+
+    ; matrix matrix-result-old freevars values basisvars
+
+; (multiple-value-bind (a b) (gauss-this-shit (list '(0 0 0 0 1 1) '(0 0 1 0 1 0) '(0 1 0 1 0 1) '(1 0 1 1 0 0)) (list 3 5 4 7))
+;     (print-matrix a)
+;     (format t "~a~%" b)
+
+;     )
+
+
+; (multiple-value-bind (a b) (gauss-this-shit (transpose (list
+;   '(0 1 1 1 1 1 1)
+;   '(1 0 1 0 1 0 0)
+;   '(1 1 1 0 1 0 0)
+;   '(0 0 0 1 0 1 1)
+;   '(1 0 1 1 1 1 1)
+;   '(1 0 0 1 0 1 1)
+;   '(1 1 1 1 0 1 1)
+;   '(0 0 0 0 1 0 0)
+;   '(1 1 1 1 0 1 0)
+; )) '(77 44 66 199 46 199 190))
+;     (print-matrix a)
+;     ; (format t "~a~%" b)
+
+;     )
+
+
+; '(0 1 0 0 1 0 0 0 1 0)
+; '(1 1 0 1 1 1 1 1 1 0)
+; '(0 1 0 1 1 0 0 0 0 1)
+; '(1 1 1 1 0 0 0 1 0 1)
+; '(0 1 0 1 1 0 1 1 1 1)
+; '(1 0 1 0 1 1 1 0 1 0)
+; '(1 0 0 1 1 1 0 0 0 1)
+; '(0 0 1 0 0 0 1 1 0 0)
+; '(1 1 1 0 1 1 1 1 1 1)
+; '(1 1 0 0 0 1 0 0 0 0)
+; '(0 1 1 0 0 0 0 0 1 0)
+; '(0 0 0 0 0 0 0 0 1 0)
+; '(0 0 1 1 1 1 1 1 1 1)
